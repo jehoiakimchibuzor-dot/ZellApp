@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "540355292191",
+    "project_id": "zellapp-774eb",
+    "storage_bucket": "zellapp-774eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:540355292191:android:4c915a1d029d63614ff92a",
+        "android_client_info": {
+          "package_name": "com.example.zell"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "540355292191-iqg6qdfe4bkd5qmnkv5msfsfet5lls7p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.zell",
+            "certificate_hash": "03d408246bf79d0f1b6de0579d09c97068d25614"
+          }
+        },
+        {
+          "client_id": "540355292191-0gcj7apssqj0mh4pf6va3c13002vvmu9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMMZx50_S-0k2c94ZcFXh8dxEEJeZl97w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "540355292191-0gcj7apssqj0mh4pf6va3c13002vvmu9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
