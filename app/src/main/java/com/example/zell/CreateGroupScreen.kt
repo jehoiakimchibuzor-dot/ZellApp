@@ -27,6 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
+/**
+ * CreateGroupScreen - UI for creating new chat groups
+ * 🔧 REFACTORED: Improved responsiveness and theme consistency (doneby Gemini)
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateGroupScreen(
@@ -52,10 +56,10 @@ fun CreateGroupScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("New Group", fontWeight = FontWeight.Bold) },
+                title = { Text("New Group", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 actions = {
@@ -63,9 +67,17 @@ fun CreateGroupScreen(
                         onClick = { if (groupName.isNotBlank()) onGroupCreated(groupName) },
                         enabled = groupName.isNotBlank() && selectedParticipants.isNotEmpty()
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = "Create", tint = if (groupName.isNotBlank() && selectedParticipants.isNotEmpty()) MaterialTheme.colorScheme.primary else Color.Gray)
+                        Icon(
+                            Icons.Default.Check, 
+                            contentDescription = "Create", 
+                            tint = if (groupName.isNotBlank() && selectedParticipants.isNotEmpty()) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
     ) { padding ->
@@ -99,7 +111,7 @@ fun CreateGroupScreen(
                                 contentScale = ContentScale.Crop
                             )
                         } else {
-                            Icon(Icons.Default.CameraAlt, null, modifier = Modifier.size(32.dp), tint = Color.Gray)
+                            Icon(Icons.Default.CameraAlt, null, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     
@@ -112,7 +124,9 @@ fun CreateGroupScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = TextFieldDefaults.colors(
                             unfocusedContainerColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary
                         )
                     )
                     
@@ -125,7 +139,9 @@ fun CreateGroupScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = TextFieldDefaults.colors(
                             unfocusedContainerColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary
                         )
                     )
                 }
@@ -136,6 +152,7 @@ fun CreateGroupScreen(
                     "Add Participants (${selectedParticipants.size})",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
             }
@@ -159,13 +176,19 @@ fun CreateGroupScreen(
                         contentScale = ContentScale.Crop
                     )
                     Spacer(Modifier.width(16.dp))
-                    Text(user.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
+                    Text(
+                        user.name, 
+                        modifier = Modifier.weight(1f), 
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                     Checkbox(
                         checked = isSelected,
                         onCheckedChange = {
                             if (it) selectedParticipants.add(user)
                             else selectedParticipants.remove(user)
-                        }
+                        },
+                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
                     )
                 }
             }

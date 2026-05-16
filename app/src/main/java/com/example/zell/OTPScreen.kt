@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -27,6 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
+/**
+ * OtpScreen - Standalone verification terminal UI
+ * 🔧 REFACTORED: Fixed responsiveness for small devices and synced with MaterialTheme (doneby Gemini)
+ */
 @Composable
 fun OtpScreen(
     phoneNumber: String = "",
@@ -50,11 +55,15 @@ fun OtpScreen(
         animationSpec = infiniteRepeatable(tween(2500), RepeatMode.Reverse), label = "pulse"
     )
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        val screenWidth = maxWidth
+        // 🔧 REFACTORED: Calculate slot width based on screen size to prevent overflow (doneby Gemini)
+        val slotWidth = (screenWidth - 100.dp) / 6
+
         // RADIAL GLOW
         Box(
             modifier = Modifier
@@ -127,7 +136,7 @@ fun OtpScreen(
                 },
                 fontSize = 14.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 lineHeight = 20.sp
             )
 
@@ -139,13 +148,13 @@ fun OtpScreen(
                 onValueChange = { if (it.length <= 6) otpCode = it },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 decorationBox = {
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(screenWidth / 40)) {
                         repeat(6) { index ->
                             val char = if (index < otpCode.length) otpCode[index].toString() else ""
                             val isFocused = otpCode.length == index
                             Box(
                                 modifier = Modifier
-                                    .width(45.dp)
+                                    .width(slotWidth.coerceIn(30.dp, 50.dp))
                                     .height(60.dp)
                                     .background(
                                         if (isFocused) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
@@ -170,7 +179,7 @@ fun OtpScreen(
                                     Box(
                                         modifier = Modifier
                                             .size(4.dp)
-                                            .background(Color.Gray.copy(alpha = 0.3f), CircleShape)
+                                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), CircleShape)
                                     )
                                 }
                             }
@@ -185,7 +194,7 @@ fun OtpScreen(
                 text = "ENTER_SEQUENCE_NOW",
                 fontSize = 10.sp,
                 letterSpacing = 4.sp,
-                color = Color.Gray.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -210,7 +219,7 @@ fun OtpScreen(
                 Text(
                     text = "ENCRYPTION_STATUS: PENDING...",
                     fontSize = 8.sp,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     letterSpacing = 2.sp
                 )
             }

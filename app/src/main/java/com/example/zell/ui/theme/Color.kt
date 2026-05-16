@@ -19,3 +19,9 @@ val LightBackground = Color(0xFFFFFFFF)
 val LightSurface = Color(0xFFF8F9FA)
 val LightOnBackground = Color(0xFF121212)
 val LightPrimary = Color(0xFFC5A059)
+
+// Pinterest Style Palette
+val PinterestRed = Color(0xFFE60023)
+val PinterestBlack = Color(0xFF111111)
+val PinterestGray = Color(0xFF767676)
+val PinterestBg = Color(0xFFEFEFEF)

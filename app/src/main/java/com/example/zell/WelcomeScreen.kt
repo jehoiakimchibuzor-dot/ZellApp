@@ -22,20 +22,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
 @Composable
 fun WelcomeScreen(onTimeout: () -> Unit) {
-    // Animation states for the "Thor's Hammer" impact
     val rotation = remember { Animatable(0f) }
-    val scale = remember { Animatable(8f) } // Start very large (falling from "sky")
+    val scale = remember { Animatable(8f) } 
     val alpha = remember { Animatable(0f) }
     val impactShake = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
-        // Phase 1: The Descent & Spin
+        // Fast-track for returning users
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val isFirstTime = currentUser == null
+
         launch {
             rotation.animateTo(
                 targetValue = 1080f,
@@ -51,7 +53,6 @@ fun WelcomeScreen(onTimeout: () -> Unit) {
             animationSpec = tween(durationMillis = 700, easing = FastOutLinearInEasing)
         )
 
-        // Phase 2: The Impact Shake
         launch {
             repeat(5) {
                 impactShake.animateTo(20f, tween(30))
@@ -60,7 +61,8 @@ fun WelcomeScreen(onTimeout: () -> Unit) {
             impactShake.animateTo(0f, tween(100))
         }
         
-        delay(1500L)
+        // Dynamic delay: shorter if user is already known
+        delay(if (isFirstTime) 1500L else 800L)
         onTimeout()
     }
 
@@ -70,7 +72,6 @@ fun WelcomeScreen(onTimeout: () -> Unit) {
             .background(MaterialTheme.colorScheme.background)
             .safeDrawingPadding()
     ) {
-        // Main Logo in the Center
         Text(
             text = buildAnnotatedString {
                 withStyle(
@@ -101,7 +102,6 @@ fun WelcomeScreen(onTimeout: () -> Unit) {
                 }
         )
 
-        // Bottom branding
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -112,7 +112,6 @@ fun WelcomeScreen(onTimeout: () -> Unit) {
                 text = "from",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Light,
-                letterSpacing = (-1).sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -120,7 +119,6 @@ fun WelcomeScreen(onTimeout: () -> Unit) {
                 text = "Jay's Hub",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
-                letterSpacing = (-1).sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
         }

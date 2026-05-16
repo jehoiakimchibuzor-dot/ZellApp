@@ -6,7 +6,7 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.4"
 activityCompose = "1.9.3"
-kotlin = "2.0.21"
+kotlin = "2.1.0"
 composeBom = "2024.10.00"
 coil = "2.7.0"
 navigationCompose = "2.8.4"
@@ -49,6 +49,6 @@ play-services-auth = { group = "com.google.android.gms", name = "play-services-a
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

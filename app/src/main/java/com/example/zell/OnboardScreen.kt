@@ -12,7 +12,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,11 +24,14 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +44,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.example.zell.R
 
 data class OnBoardingPage(
     val title: String,
@@ -51,8 +52,13 @@ data class OnBoardingPage(
     val mainColor: Color
 )
 
+/**
+ * OnBoardScreen - Introduces the user to the app
+ */
+@OptIn(UnstableApi::class)
 @Composable
 fun OnBoardScreen(onNavigateToSignUp: () -> Unit) {
+    val context = LocalContext.current
     val pages = listOf(
         OnBoardingPage(
             title = "Connect Globally",
@@ -75,7 +81,38 @@ fun OnBoardScreen(onNavigateToSignUp: () -> Unit) {
     )
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    val uriHandler = LocalUriHandler.current
+    
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            repeatMode = Player.REPEAT_MODE_ALL
+            playWhenReady = true
+            volume = 0f 
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> exoPlayer.play()
+                Lifecycle.Event.ON_STOP -> exoPlayer.pause()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            exoPlayer.release()
+        }
+    }
+
+    LaunchedEffect(pagerState.currentPage) {
+        val videoRes = pages[pagerState.currentPage].videoRes
+        val path = "android.resource://${context.packageName}/$videoRes"
+        exoPlayer.setMediaItem(MediaItem.fromUri(path))
+        exoPlayer.prepare()
+        exoPlayer.play()
+    }
 
     Column(
         modifier = Modifier
@@ -86,7 +123,6 @@ fun OnBoardScreen(onNavigateToSignUp: () -> Unit) {
     ) {
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Brand Title
         Text(
             text = buildAnnotatedString {
                 withStyle(
@@ -118,17 +154,15 @@ fun OnBoardScreen(onNavigateToSignUp: () -> Unit) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Horizontal Pager
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
         ) { pageIndex ->
-            OnBoardingContent(page = pages[pageIndex])
+            OnBoardingContent(page = pages[pageIndex], exoPlayer = exoPlayer)
         }
 
-        // Pager Indicators
         Row(
             modifier = Modifier
                 .height(30.dp)
@@ -147,25 +181,40 @@ fun OnBoardScreen(onNavigateToSignUp: () -> Unit) {
             }
         }
 
-        // Space before legal text
         if (pagerState.currentPage == pages.size - 1) {
             val annotatedString = buildAnnotatedString {
                 append("Read our ")
-                pushStringAnnotation(tag = "URL", annotation = "https://www.google.com/search?q=privacy+policy")
-                withStyle(SpanStyle(color = pages[pagerState.currentPage].mainColor, fontWeight = FontWeight.Bold)) {
+                withLink(
+                    LinkAnnotation.Url(
+                        url = "https://www.google.com/search?q=privacy+policy",
+                        styles = TextLinkStyles(
+                            style = SpanStyle(
+                                color = pages[pagerState.currentPage].mainColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    )
+                ) {
                     append("Privacy Policy")
                 }
-                pop()
                 append(". Tap \"Agree and Continue\" to accept the ")
-                pushStringAnnotation(tag = "URL", annotation = "https://www.google.com/search?q=terms+of+service")
-                withStyle(SpanStyle(color = pages[pagerState.currentPage].mainColor, fontWeight = FontWeight.Bold)) {
+                withLink(
+                    LinkAnnotation.Url(
+                        url = "https://www.google.com/search?q=terms+of+service",
+                        styles = TextLinkStyles(
+                            style = SpanStyle(
+                                color = pages[pagerState.currentPage].mainColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    )
+                ) {
                     append("Terms of Service")
                 }
-                pop()
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            ClickableText(
+            Text(
                 text = annotatedString,
                 style = TextStyle(
                     fontSize = 12.sp,
@@ -173,20 +222,13 @@ fun OnBoardScreen(onNavigateToSignUp: () -> Unit) {
                     color = Color.Gray,
                     lineHeight = 18.sp
                 ),
-                modifier = Modifier.padding(horizontal = 40.dp),
-                onClick = { offset ->
-                    annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                        .firstOrNull()?.let { annotation ->
-                            uriHandler.openUri(annotation.item)
-                        }
-                }
+                modifier = Modifier.padding(horizontal = 40.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
         } else {
             Spacer(modifier = Modifier.height(40.dp))
         }
 
-        // Action Button
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -198,7 +240,6 @@ fun OnBoardScreen(onNavigateToSignUp: () -> Unit) {
                 val interactionSource = remember { MutableInteractionSource() }
                 val isPressed by interactionSource.collectIsPressedAsState()
                 
-                // Animate the glow effect
                 val glowRadius by animateDpAsState(
                     targetValue = if (isPressed) 16.dp else 0.dp,
                     animationSpec = tween(durationMillis = 100),
@@ -248,7 +289,7 @@ fun OnBoardScreen(onNavigateToSignUp: () -> Unit) {
 }
 
 @Composable
-fun OnBoardingContent(page: OnBoardingPage) {
+fun OnBoardingContent(page: OnBoardingPage, exoPlayer: ExoPlayer) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -256,15 +297,15 @@ fun OnBoardingContent(page: OnBoardingPage) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Video Player Box
         Box(
             modifier = Modifier
-                .size(320.dp)
+                .fillMaxWidth(0.9f)
+                .aspectRatio(1f)
                 .clip(RoundedCornerShape(24.dp))
                 .background(page.mainColor.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
-            VideoPlayer(videoRes = page.videoRes)
+            VideoPlayerSurface(exoPlayer = exoPlayer)
         }
 
         Spacer(modifier = Modifier.height(40.dp))
@@ -292,41 +333,7 @@ fun OnBoardingContent(page: OnBoardingPage) {
 
 @OptIn(UnstableApi::class)
 @Composable
-fun VideoPlayer(videoRes: Int) {
-    val context = LocalContext.current
-    
-    // Initialize ExoPlayer
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            repeatMode = Player.REPEAT_MODE_ALL
-            playWhenReady = true
-            volume = 0f 
-        }
-    }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> exoPlayer.play()
-                Lifecycle.Event.ON_STOP -> exoPlayer.pause()
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            exoPlayer.release()
-        }
-    }
-
-    LaunchedEffect(videoRes) {
-        val path = "android.resource://${context.packageName}/$videoRes"
-        exoPlayer.setMediaItem(MediaItem.fromUri(path))
-        exoPlayer.prepare()
-        exoPlayer.play()
-    }
-
+fun VideoPlayerSurface(exoPlayer: ExoPlayer) {
     AndroidView(
         factory = { ctx ->
             PlayerView(ctx).apply {

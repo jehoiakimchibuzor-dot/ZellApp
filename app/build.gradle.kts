@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
+    id("com.google.firebase.crashlytics")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -29,15 +31,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
+        buildConfig = true   // enables BuildConfig.DEBUG for dev guards
     }
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 dependencies {
@@ -69,6 +73,15 @@ dependencies {
 
     // Google Sign-In
     implementation(libs.play.services.auth)
+
+    // Permissions (Accompanist)
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+
+    // Network Connectivity
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
+
+    // Crash Reporting (Firebase Crashlytics)
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

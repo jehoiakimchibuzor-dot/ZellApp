@@ -23,6 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
+/**
+ * CreateSpaceScreen - UI for starting new conversations or groups
+ * 🔧 REFACTORED: Improved responsiveness and theme consistency (doneby Gemini)
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateSpaceScreen(
@@ -31,6 +35,7 @@ fun CreateSpaceScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     
+    // Mock contacts for UI development
     val contacts = remember {
         listOf(
             StoryUser("1", "Sarah Okonkwo", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200"),
@@ -50,10 +55,10 @@ fun CreateSpaceScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("New Message", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text("New Message", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -123,7 +128,7 @@ fun CreateSpaceScreen(
                     Text(
                         "Suggested",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
@@ -156,10 +161,15 @@ fun ContactItem(user: StoryUser, onClick: () -> Unit) {
         )
         Spacer(Modifier.width(16.dp))
         Column {
-            Text(user.name, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            Text(
+                user.name, 
+                fontWeight = FontWeight.SemiBold, 
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onBackground
+            )
             Text(
                 "@${user.name.lowercase().replace(" ", "")}", 
-                color = Color.Gray, 
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 fontSize = 13.sp
             )
         }

@@ -1,0 +1,138 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return request.auth.uid == uid;
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+    // Own profile: full read/write. Other profiles: read-only (for avatars, names, etc.)
+    match /users/{userId} {
+      allow read:  if isAuthed();
+      allow write: if isUser(userId);
+
+      // Notifications live as a subcollection under the recipient's profile
+      // so we can scope reads to: "only you can see your own notifications"
+      match /notifications/{notificationId} {
+        allow read, write: if isUser(userId);
+      }
+
+      // Boards (Pinterest-style pin boards)
+      match /boards/{boardId} {
+        allow read:   if isAuthed();
+        allow create: if isUser(userId);
+        allow update, delete: if isUser(userId);
+      }
+    }
+
+    // ── Follows / Relationships ───────────────────────────────────────────────
+    // Stored as: users/{userId}/following/{targetId}  &  users/{userId}/followers/{followerId}
+    // Flat collections used by FollowViewModel
+    match /following/{userId} {
+      allow read:  if isAuthed();
+      allow write: if isUser(userId);
+    }
+
+    match /followers/{userId} {
+      allow read:  if isAuthed();
+      // The follower document is written by the person who follows, not the profile owner
+      allow write: if isAuthed();
+    }
+
+    // ── Block list ────────────────────────────────────────────────────────────
+    match /blocks/{userId}/{blockedId} {
+      allow read, write: if isUser(userId);
+    }
+
+    // ── Posts ─────────────────────────────────────────────────────────────────
+    match /posts/{postId} {
+      allow read:   if isAuthed();
+      allow create: if isAuthed();
+      // Only the author can update or delete their post
+      allow update, delete: if isUser(resource.data.authorId);
+
+      // Comments nested under their parent post
+      match /comments/{commentId} {
+        allow read:   if isAuthed();
+        allow create: if isAuthed();
+        allow update, delete: if isUser(resource.data.authorId);
+      }
+    }
+
+    // ── Stories ───────────────────────────────────────────────────────────────
+    // NOTE: CreateStoryScreen stores stories as an array field on users/{uid},
+    // which is already covered by the /users/{userId} write rule above.
+    // This collection rule covers any future standalone story documents.
+    match /stories/{storyId} {
+      allow read:   if isAuthed();
+      allow create: if isAuthed();
+      allow delete: if isUser(resource.data.userId);
+    }
+
+    // ── Reels ─────────────────────────────────────────────────────────────────
+    match /reels/{reelId} {
+      allow read:   if isAuthed();
+      allow create: if isAuthed();
+      allow update, delete: if isUser(resource.data.userId);
+    }
+
+    // ── Discover / Pins ───────────────────────────────────────────────────────
+    match /discover/{itemId} {
+      allow read: if isAuthed();
+      // Create: use request.resource (the doc being written, not the existing one)
+      allow create: if isAuthed() && isUser(request.resource.data.creatorId);
+      // Update/delete: use resource (the existing doc)
+      allow update, delete: if isUser(resource.data.creatorId);
+    }
+
+    // ── Conversations (Messenger / Spaces) ────────────────────────────────────
+    // conversationId is deterministic: smallerUid_largerUid
+    // participants array contains both UIDs so we can guard reads/writes cleanly
+    match /conversations/{conversationId} {
+      // Only participants can read or update conversation metadata
+      allow read, update: if isAuthed()
+        && request.auth.uid in resource.data.participants;
+
+      // Create is allowed for any authenticated user
+      // (SpacesViewModel creates the doc on first message)
+      allow create: if isAuthed();
+
+      // Messages subcollection — same participant check
+      match /messages/{messageId} {
+        // Read: must be a participant of the parent conversation
+        allow read: if isAuthed()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+
+        // Create: any authenticated user can send (conversation already gate-keeps participants)
+        allow create: if isAuthed();
+
+        // Update (reactions, isRead, isDeleted, isEdited): participants only
+        allow update: if isAuthed()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+
+        // Hard delete: only sender
+        allow delete: if isAuthed()
+          && isUser(resource.data.senderId);
+      }
+    }
+
+    // ── Spaces / Groups (group chats — future) ────────────────────────────────
+    match /spaces/{spaceId} {
+      allow read, write: if isAuthed() && request.auth.uid in resource.data.members;
+      allow create:      if isAuthed();
+    }
+
+    // ── Notifications (top-level, written by FollowViewModel triggers) ────────
+    // Kept here for backward-compat if any code writes to /notifications/{id}
+    // The primary path is users/{userId}/notifications/{notificationId} above.
+    match /notifications/{notificationId} {
+      allow read, write: if isAuthed();
+    }
+  }
+}

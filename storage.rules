@@ -1,0 +1,61 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Helper ────────────────────────────────────────────────────────────────
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    // 50 MB max for any upload
+    function underSizeLimit() {
+      return request.resource.size < 50 * 1024 * 1024;
+    }
+
+    // ── Post images ───────────────────────────────────────────────────────────
+    // Path: posts/{fileName}
+    match /posts/{fileName} {
+      allow read:  if isAuthed();
+      allow write: if isAuthed() && underSizeLimit();
+    }
+
+    // ── Story media (images + videos) ─────────────────────────────────────────
+    // Path: stories/{userId}/{fileName}
+    match /stories/{userId}/{fileName} {
+      allow read:  if isAuthed();
+      allow write: if isAuthed() && isOwner(userId) && underSizeLimit();
+    }
+
+    // ── Profile avatars ───────────────────────────────────────────────────────
+    // Path: avatars/{userId}/{fileName}
+    match /avatars/{userId}/{fileName} {
+      allow read:  if isAuthed();
+      allow write: if isAuthed() && isOwner(userId) && underSizeLimit();
+    }
+
+    // ── Chat / Space media (images, voice notes, videos) ─────────────────────
+    // Path: chat_media/{conversationId}/{fileName}
+    match /chat_media/{conversationId}/{fileName} {
+      allow read:  if isAuthed();
+      allow write: if isAuthed() && underSizeLimit();
+    }
+
+    // ── Reels / short videos ──────────────────────────────────────────────────
+    // Path: reels/{userId}/{fileName}
+    match /reels/{userId}/{fileName} {
+      allow read:  if isAuthed();
+      allow write: if isAuthed() && isOwner(userId) && underSizeLimit();
+    }
+
+    // ── Discover / pin images ─────────────────────────────────────────────────
+    // Path: discover/{fileName}
+    match /discover/{fileName} {
+      allow read:  if isAuthed();
+      allow write: if isAuthed() && underSizeLimit();
+    }
+  }
+}
